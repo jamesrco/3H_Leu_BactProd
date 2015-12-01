@@ -1,5 +1,5 @@
 # 3H_Leu_BactProd
-Suite of scripts for evaluating, calculating, and plotting rates of marine bacterial production using liquid scintillation counter data from the 3H-leucine microcentrifuge method. These scripts and dependencies were used to generate all BP data in:
+Suite of scripts for evaluating, calculating, and plotting rates of marine bacterial production using liquid scintillation counter data obtained from the 3H-leucine microcentrifuge method. These scripts and dependencies were used to generate all BP data in:
 
 Collins, J. R., B. R. Edwards, K. Thamatrakoln, J. E. Ossolinski, G. R. DiTullio, K. D. Bidle, S. C. Doney, and B. A. S. Van Mooy. 2015. [The multiple fates of sinking particles in the North Atlantic Ocean](http://dx.doi.org/10.1002/2014GB005037). Global Biogeochem. Cycles 29: 1471-1494, doi:10.1002/2014GB005037
 
