@@ -1,29 +1,95 @@
-% riBPdata.m: for reading in and working up 3H-leu bacterial production data
+% riBPdata.m
 
-% will work up all data as long as it's given to MATLAB in the right
-% format, and then export to:
-%                  (1) a MATLAB .mat file and
-%                  (2) a series of CSV files
+% Created by Krista Longnecker, klongnecker@whoi.edu, 9/12/2011
+% Revised by K.L. 2/28/2013
+% Revised by Jamie Collins, james.r.collins@aya.yale.edu, on 11/1/2013
+% Revised by J.R.C., 12/1/2015, to make suitable for upload to GitHub
 
-% NOTE: non-numerical metadata (notes on each sample or station, etc., get saved
-% to a structure within the MATLAB file
+% Purpose: Read in and work up 3H-leucine bacterial production data from a
+% liquid scintillation counter. Parse metadata files for oceanographic
+% cruises, then calculate 3H-leu uptake rates by CTD station or
+% experimental treatment and timepoint. Maintained at
+% https://github.com/jamesrco/3H_Leu_BactProd under the MIT License. Can be
+% used with the follow-on data visualization script BactProd_plots.m. Will
+% work up all data as long as it's given to MATLAB in the right
+% format, and then export to: (1) a MATLAB .mat file and (2) a series of
+% .csv files
 
-% KL 9/12/2011; KL 2/28/2013
-% revised JC 11/1/2013
+% This script was used to generate all BP data presented in Collins, J. R.,
+% B. R. Edwards, K. Thamatrakoln, J. E. Ossolinski, G. R. DiTullio, K. D.
+% Bidle, S. C. Doney, and B. A. S. Van Mooy. 2015. The multiple fates of
+% sinking particles in the North Atlantic Ocean. Global Biogeochem. Cycles
+% 29: 1471-1494, doi:10.1002/2014GB005037
+%
+% The final, processed BP data used in the 2015 paper are archived to:
+% http://www.bco-dmo.org/deployment/58787 (KN207-1 data) and
+% http://www.bco-dmo.org/project/2136 (KN207-3 data)
+
+% For details on the 3H-leucine microcentrifige method, see:
+%
+%   Kirchman, D., E. Knees, and R. Hodson. 1985. Leucine Incorporation and
+%   Its Potential as a Measure of Protein-Synthesis by Bacteria in Natural
+%   Aquatic Systems. Appl. Environ. Microbiol. 49: 599-607.
+%
+%   and
+%
+%   Kirchman, D. 2001. Measuring bacterial biomass production and growth
+%   rates from leucine incorporation in natural aquatic environments.
+%   In Methods in Microbiology. J. H. Paul, editor. Academic Press. 227-
+%   237.
+
+% Dependencies/assumptions:
+%
+%  1. The file Quench_curve_fit_params.txt, generated using plotQuenched.m
+%
+%  2. Liquid scintillation counter data for your samples. Example LSC data
+%  from Collins et al. 2015 are provided in the file
+%  "Van Mooy BP sample master log - KN207-1 and KN207-3.xls" in the sub-
+%  repository sample_data_metadata.
+%  The "Sample ID" field in this file should contain sample numbers that
+%  correspond to the field of the same name in the sample metadata file
+%  (see below).
+%
+%  3. A log file containing two kinds of sample metadata: (1) metadata for each
+%  sample, and (2) metadata for each set of incubations (and the experimental
+%  treatments/timepoints, if appropriate) in which the samples were analyzed,
+%  including the incubation duration and temperature. Metadata that accompany
+%  the Collins et al. 2015 LSC data are provided in the file
+%  "Sample inventory for BP workups - KN207-1,KN207-3.xlsx"
+%  The first tab of this Excel file ("Sample ID inventory") contains
+%  metadata of the first type, while the second tab ("Incu durations,
+%  temps, notes") contains metadata of the second type
+%
+%  4. For "full" processing of BP data from CTD casts, also required are 
+%  two files (KN207-1_shipcasts.xlsx and KN207-3_shipcasts.xlsx) containing
+%  CTD cast metadata
+
+% NOTE: Non-numerical metadata (notes on each sample or station, etc.) get saved
+% to a structure within the MATLAB file.
+
+%% User specify file paths, other required inputs
+
+% first, prepare workspace
 
 clear all
 close all
 
-disp([char(10) 'This script requires the file Quench_curve_fit_params.txt, which you should have generated using plotQuenched.m.']);
-
-% designate a file that will serve as a sink for data output
-
-NameOfFile = 'BLATZ_VICE_BactProd_calcs_20140115.mat';
-BP_directory = '/Users/jrcollins/Dropbox/KN207-3 NA VICE/Data/BP workups/';
-% location of the BP data inputs; also where files wil be dumped at end of
+% define location of the BP data and metadata inputs; also where files wil be dumped at end of
 % script
+BPdata_directory = 'sample_data_metadata/';
 
-% define and calculate some constants pertaining to the method
+% specify name of file containing LSC sample data
+LSCdatafile = 'Van Mooy BP sample master log - KN207-1 and KN207-3.xls';
+
+% specify name of file containing metadata
+BPmetdatfile = 'Sample inventory for BP workups - KN207-1,KN207-3.xlsx';
+
+% specify base name of file that will serve as a sink for .mat and .csv data output
+NameOfFile = '3H_Leu_BactProd_calcs';
+
+% define and calculate some constants pertaining to the method; these are
+% as used in Collins et al., 2015, but user will want to redefine these as
+% appropriate
 
 Iso_conc_nM = 20; % concentration of 3H-leu in each sample, in nM
 Inc_vol_mL = 1; % in mL; 1.0 mL sample used for each incubation
@@ -31,9 +97,13 @@ Inc_vol_L = Inc_vol_mL/1000; % in L
 Leu_spec_act = 146.5; % specific activity of the 3H used for this work, in Ci/mmol
 Ci = 3.7e10; % definition of a Curie, in dps
 
+%% Parse data, match with metadata, calculate rates
+
+disp([char(10) 'This script requires the file Quench_curve_fit_params.txt, which you should have generated using plotQuenched.m.']);
+
 % read in the LSC data
 
-[num_data txt_data raw_data] = xlsread(strcat(BP_directory,'Van Mooy BP sample master log - KN207-1 and KN207-3 - Ossolinski and Collins 01-14-14.xls'));
+[num_data txt_data raw_data] = xlsread(strcat(BPdata_directory,LSCdatafile));
 data.CPM = cell2mat(raw_data(6:end,9)); % counts per minute, still need to convert to DPM
 data.Hnumber = cell2mat(raw_data(6:end,8)); % need this to convert to DPM
 data.sInfo = raw_data(6:end,4); % field that contains sample number or notes about the sample if it's a standard or blank
@@ -53,18 +123,18 @@ end
 clear i
 
 % now, read in data from the BP sample inventory; will need to merge this
-% with our LSC data since the sample inventory has the details for each BP vial
-% JC transcribed this data from the two BP field notebooks in 10/2013
-% will have a mix of CTD data and data from some on-deck mesocosm
-% experiments
+% with LSC data since the sample inventory has the details for each BP vial
+% in KN207-1 and KN207-3 data, have a mix of CTD data and data from some
+% on-deck mesocosm experiments
 
 % the inventory spreadsheet has two tabs, first is a sample inventory
-% containing information about each sample; second is a station inventory
-% containing information about each station
+% containing information about each sample ("Sample ID inventory"); second
+% is a station inventory containing information about each station ("Incu
+% durations, temps, notes")
 
 % first, read in data from the sample inventory
 
-[num_sampinv txt_sampinv raw_sampinv] = xlsread(strcat(BP_directory,'Sample inventory for BP workups - KN207-1,KN207-3.xlsx'),'Sample ID inventory');
+[num_sampinv txt_sampinv raw_sampinv] = xlsread(strcat(BPdata_directory,BPmetdatfile),'Sample ID inventory');
 
 % clean things up a bit
 
@@ -106,6 +176,10 @@ sampinv.LiveKilledindex(ind)=2;
 sampinv.Notes = raw_sampinv(:,11);
 
 % convert experiment names to numbers to make data processing easier
+% user will want to specify these particular to his/her own work, if
+% experimental data are to be processed (not necessary if it's just CTD
+% data)
+
 sampinv.Exper_no(1:size(sampinv.sNumber,1),1) = NaN;
 ind_exp1=find(cellfun(@(x) strcmp(x,'Process_Station_1_mesocosms'), sampinv.Exper_name));
 sampinv.Exper_no(ind_exp1) = 1;
@@ -123,6 +197,10 @@ ind_exp7=find(cellfun(@(x) strcmp(x,'Hi_lo_light_mesocosms'), sampinv.Exper_name
 sampinv.Exper_no(ind_exp7) = 7;
 
 % convert experiment treatments to numbers to make data processing easier
+% as above, user will want to specify these particular to his/her own work, if
+% experimental data are to be processed (not necessary if it's just CTD
+% data)
+
 sampinv.Exper_treat_no(1:size(sampinv.sNumber,1),1) = NaN;
 ind_tmt1=find(cellfun(@(x) strcmp(x,'control'), sampinv.Exper_treat));
 sampinv.Exper_treat_no(ind_tmt1) = 1;
@@ -157,7 +235,7 @@ sampinv.Exper_treat_no(ind_tmt15) = 15;
 
 % now, read in data from the station inventory
 
-[num_stainv txt_stainv  raw_stainv ] = xlsread(strcat(BP_directory,'Sample inventory for BP workups - KN207-1,KN207-3.xlsx'),'Incu durations, temps, notes');
+[num_stainv txt_stainv  raw_stainv ] = xlsread(strcat(BPdata_directory,BPmetdatfile),'Incu durations, temps, notes');
 
 stainv.CruiseName = raw_stainv(4:end,1);
 stainv.CruiseID(1:size(stainv.CruiseName,1),1) = NaN;
@@ -184,6 +262,10 @@ stainv.Exper_temptreatementincutemp = cell2mat(raw_stainv(4:end,10));
 stainv.Station_Notes = raw_stainv(4:end,11);
 
 % convert experiment names to numbers to make data processing easier
+% as above, user will want to specify these particular to his/her own work, if
+% experimental data are to be processed (not necessary if it's just CTD
+% data)
+
 stainv.Exper_no(1:size(stainv.CruiseID,1),1) = NaN;
 ind_exp1_stainv=find(cellfun(@(x) strcmp(x,'Process_Station_1_mesocosms'), stainv.Exper_name));
 stainv.Exper_no(ind_exp1_stainv) = 1;
@@ -200,10 +282,10 @@ stainv.Exper_no(ind_exp6_stainv) = 6;
 ind_exp7_stainv=find(cellfun(@(x) strcmp(x,'Hi_lo_light_mesocosms'), stainv.Exper_name));
 stainv.Exper_no(ind_exp7_stainv) = 7;
 
-% read in CTD station data
+% read in CTD station metadata
 
-[num_KN2071data txt_KN2071data  raw_KN2071data ] = xlsread(strcat(BP_directory,'KN207-1_shipcasts.xlsx'));
-[num_KN2073data txt_KN2073data  raw_KN2073data ] = xlsread(strcat(BP_directory,'KN207-3_shipcasts.xlsx'));
+[num_KN2071data txt_KN2071data  raw_KN2071data ] = xlsread(strcat(BPdata_directory,'KN207-1_shipcasts.xlsx'));
+[num_KN2073data txt_KN2073data  raw_KN2073data ] = xlsread(strcat(BPdata_directory,'KN207-3_shipcasts.xlsx'));
 
 Ship_data_2071=cell2mat(raw_KN2071data(9:end,[1 5 6 7]));
 Ship_data_2073=cell2mat(raw_KN2073data(11:end,[1 5 6 7]));
@@ -237,7 +319,7 @@ clear i IncTime_start IncTime_end
 % now, to get values in DPM rather than CPM,
 % run the following after getting the numbers from plotQuenched.m
 
-p = load('Quench_curve_fit_params.txt');
+p = load('dependencies/Quench_curve_fit_params.txt');
 x = data.Hnumber;
 data.efficiency = p(1).*(x.^3) - p(2).*(x.^2) - p(3).*x + p(4) ;
 data.DPM = data.CPM./data.efficiency; clear x
@@ -664,44 +746,46 @@ Station_info_with_metadata.Station_notes=stainv.Station_Notes;
 
 clear BP_results Station_data sampinv stainv
 
-% save to a MATLAB file
+%% File export
 
-save(strcat(BP_directory,NameOfFile));
+% save data to a MATLAB file
+
+save(strcat(BPdata_directory,NameOfFile,'.mat'));
 
 % export to a series of CSV files
 
 export_precision=10; % necessary otherwise timestamps won't be written correctly
 
 headers_BP_results_by_sample_ID = ['Sample_number,Cruise_ID,CTD_station_no,Depth_m,Experiment_no,Experiment_time_point,Exper_treat_no,Exper_treatment_carboy_no,Live_or_killed_index,DPM,CPM,H_number,LSC_efficiency,Incu_start_time,Incu_end_time,Incu_duration,CTD_sample_incutemp,Experimental_sample_incutemp,Experimental_temp_treatment_incu_temp,Trit_leu_uptake_dpm_L_hr,Trit_leu_uptake_pmol_L_hr,CTD_station_time,CTD_station_lat,CTD_station_long'];
-outid = fopen(strcat(BP_directory,'BLATZ_VICE_BactProd_results_by_sample_ID.csv'), 'w+');
+outid = fopen(strcat(BP_directory,NameOfFile,'_by_sample_ID.csv'), 'w+');
 fprintf(outid, '%s', headers_BP_results_by_sample_ID);
 fclose(outid);
-dlmwrite (strcat(BP_directory,'BLATZ_VICE_BactProd_results_by_sample_ID.csv'),BP_results_by_sample_ID,'roffset',1,'-append','precision',export_precision);
+dlmwrite (strcat(BP_directory,NameOfFile,'_by_sample_ID.csv'),BP_results_by_sample_ID,'roffset',1,'-append','precision',export_precision);
 
 headers_Station_data_by_station_no = ['Cruise_ID,CTD_station_no,Experiment_no,Experiment_time_point,Incu_start_time,Incu_end_time,Incu_duration,CTD_sample_incutemp,Experimental_sample_incutemp,Experimental_temp_treatment_incu_temp,CTD_station_time,CTD_station_lat,CTD_station_long'];
-outid = fopen(strcat(BP_directory,'BLATZ_VICE_BactProd_Station_data_by_station_no.csv'), 'w+');
+outid = fopen(strcat(BP_directory,NameOfFile,'_by_station_no.csv'), 'w+');
 fprintf(outid, '%s', headers_Station_data_by_station_no);
 fclose(outid);
-dlmwrite (strcat(BP_directory,'BLATZ_VICE_BactProd_Station_data_by_station_no.csv'),Station_data_by_station_no,'roffset',1,'-append','precision',export_precision);
+dlmwrite (strcat(BP_directory,NameOfFile,'_by_station_no.csv'),Station_data_by_station_no,'roffset',1,'-append','precision',export_precision);
 
 headers_BP_results_replicate_averaged_by_CTD = ['Cruise_ID,CTD_station_no,Depth,Mean_DPM_live_samples,Standard_dev_live_samples,DPM_of_killed_control,Incu_duration,Mean_trit_leu_uptake_live_samples_dpm_L_hr,Std_dev_trit_leu_uptake_live_samples_dpm_l_hr,Trit_leu_uptake_killed_control_dpm_L_hr,Trit_leu_uptake_dpm_L_hr,Std_dev_trit_leu_uptake_dpm_l_hr,Mean_trit_leu_uptake_live_samples_pmol_L_hr,Std_dev_trit_leu_uptake_live_samples_pmol_L_hr,Trit_leu_uptake_killed_control_pmol_L_hr,Trit_leu_uptake_pmol_L_hr,Std_dev_trit_leu_uptake_pmol_L_hr,Signal_to_noise_ratio,CTD_sample_incutemp,CTD_station_time,CTD_station_lat,CTD_station_long'];
-outid = fopen(strcat(BP_directory,'BLATZ_VICE_BactProd_results_replicate_averaged_by_CTD.csv'), 'w+');
+outid = fopen(strcat(BP_directory,NameOfFile,'_replicate_averaged_by_CTD.csv'), 'w+');
 fprintf(outid, '%s', headers_BP_results_replicate_averaged_by_CTD);
 fclose(outid);
-dlmwrite (strcat(BP_directory,'BLATZ_VICE_BactProd_results_replicate_averaged_by_CTD.csv'),BP_results_replicate_averaged_by_CTD,'roffset',1,'-append','precision',export_precision);
+dlmwrite (strcat(BP_directory,NameOfFile,'_replicate_averaged_by_CTD.csv'),BP_results_replicate_averaged_by_CTD,'roffset',1,'-append','precision',export_precision);
 
 headers_BP_results_replicate_averaged_by_experiment = ['Cruise_ID,Experiment_no,Experiment_time_point,Exper_treatment_no,Mean_DPM_live_samples,Standard_dev_live_samples,Mean_DPM_killed_controls,Standard_dev_killed_controls,Incu_duration,Mean_trit_leu_uptake_live_samples_dpm_L_hr,Std_dev_trit_leu_uptake_live_samples_dpm_l_hr,Mean_trit_leu_uptake_killed_controls_dpm_L_hr,Std_dev_trit_leu_uptake_killed_controls_dpm_L_hr,Trit_leu_uptake_dpm_L_hr,Std_dev_trit_leu_uptake_dpm_l_hr,Mean_trit_leu_uptake_live_samples_pmol_L_hr,Std_dev_trit_leu_uptake_live_samples_pmol_L_hr,Mean_trit_leu_uptake_killed_controls_pmol_L_hr,Std_dev_trit_leu_uptake_killed_controls_pmol_L_hr,Trit_leu_uptake_pmol_L_hr,Std_dev_trit_leu_uptake_pmol_L_hr,Signal_to_noise_ratio,Experimental_sample_incutemp,Experimental_temp_treatment_incu_temp'];
-outid = fopen(strcat(BP_directory,'BLATZ_VICE_BactProd_results_replicate_averaged_by_experiment.csv'), 'w+');
+outid = fopen(strcat(BP_directory,NameOfFile,'_replicate_averaged_by_experiment.csv'), 'w+');
 fprintf(outid, '%s', headers_BP_results_replicate_averaged_by_experiment);
 fclose(outid);
-dlmwrite (strcat(BP_directory,'BLATZ_VICE_BactProd_results_replicate_averaged_by_experiment.csv'),BP_results_replicate_averaged_by_experiment,'roffset',1,'-append','precision',export_precision);
+dlmwrite (strcat(BP_directory,NameOfFile,'_replicate_averaged_by_experiment.csv'),BP_results_replicate_averaged_by_experiment,'roffset',1,'-append','precision',export_precision);
 
 disp([char(10) 'The following files have been generated:' char(10)]);
-disp('BLATZ_VICE_BactProd_results_by_sample_ID.csv');
-disp('BLATZ_VICE_BactProd_Station_data_by_station_no.csv');
-disp('BLATZ_VICE_BactProd_results_replicate_averaged_by_CTD.csv');
-disp('BLATZ_VICE_BactProd_results_replicate_averaged_by_experiment.csv');
-disp(NameOfFile);
+disp(strcat(NameOfFile,'_by_sample_ID.csv'));
+disp(strcat(NameOfFile,'_by_station_no.csv'));
+disp(strcat(NameOfFile,'_replicate_averaged_by_CTD.csv'));
+disp(strcat(NameOfFile,'_replicate_averaged_by_experiment.csv'));
+disp(strcat(NameOfFile,'.mat'));
 disp([char(10) 'These files can be found in:']);
 disp(BP_directory);
 
