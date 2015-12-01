@@ -38,7 +38,7 @@
 %
 %  3. A file containing quench standard data from your liquid scintillation
 %  counter (example data are contained in a file
-%  "Quench_standards_20130924.xlsx," which is included in the repo where
+%  "dependencies/Quench_standards_20130924.xlsx," which is included in the repo where
 %  this script is maintained.
 %
 %  4. User specification of the activity of the quench standard series
@@ -47,7 +47,7 @@
 %% User specify file paths, other required inputs
 
 % location of quench standard data
-[Quench_num Quench_txt Quench_raw ] =xlsread('Quench_standards_20130924.xlsx');
+[Quench_num Quench_txt Quench_raw ] =xlsread('dependencies/Quench_standards_20130924.xlsx');
 
 sDPM = 258000; % DPM of the quenched standard series; user should update appropriately
 
@@ -85,6 +85,6 @@ disp([char(10) 'Values of best-fit parameters for a cubic function of form' char
 format SHORTG;
 disp(p');
 
-%write the values to a file
+% write the values to a file
 
-dlmwrite('Quench_curve_fit_params.txt',p);
+dlmwrite('dependencies/Quench_curve_fit_params.txt',p);
