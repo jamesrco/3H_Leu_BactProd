@@ -38,7 +38,7 @@
 %   In Methods in Microbiology. J. H. Paul, editor. Academic Press. 227-
 %   237.
 
-% Dependencies/assumptions:
+% Dependencies:
 %
 %  1. The file Quench_curve_fit_params.txt, generated using plotQuenched.m
 %
@@ -64,8 +64,14 @@
 %  two files (KN207-1_shipcasts.xlsx and KN207-3_shipcasts.xlsx) containing
 %  CTD cast metadata
 
-% NOTE: Non-numerical metadata (notes on each sample or station, etc.) get saved
-% to a structure within the MATLAB file.
+% Caveats:
+%
+%  1. Non-numerical metadata (notes on each sample or station, etc.) get saved
+%  to a structure within the MATLAB file.
+%
+%  2. Because of the way mfilename functions, the file export code only works
+%  properly when the entire script is run; if you try to run just the file
+%  export section by itself at the command line, you'll get a bunch of errors
 
 %% User specify file paths, other required inputs
 
@@ -748,6 +754,14 @@ clear BP_results Station_data sampinv stainv
 
 %% File export
 
+% N.B.: Because of the way mfilename functions, file export only works
+% properly when the entire script is run; if you try to run just this
+% section at the command line, you'll get a bunch of errors
+
+% first, change directory to location of riBPdata.m
+
+cd(fileparts(mfilename('fullpath')))
+
 % save data to a MATLAB file
 
 save(strcat(BPdata_directory,NameOfFile,'.mat'));
@@ -757,28 +771,28 @@ save(strcat(BPdata_directory,NameOfFile,'.mat'));
 export_precision=10; % necessary otherwise timestamps won't be written correctly
 
 headers_BP_results_by_sample_ID = ['Sample_number,Cruise_ID,CTD_station_no,Depth_m,Experiment_no,Experiment_time_point,Exper_treat_no,Exper_treatment_carboy_no,Live_or_killed_index,DPM,CPM,H_number,LSC_efficiency,Incu_start_time,Incu_end_time,Incu_duration,CTD_sample_incutemp,Experimental_sample_incutemp,Experimental_temp_treatment_incu_temp,Trit_leu_uptake_dpm_L_hr,Trit_leu_uptake_pmol_L_hr,CTD_station_time,CTD_station_lat,CTD_station_long'];
-outid = fopen(strcat(BP_directory,NameOfFile,'_by_sample_ID.csv'), 'w+');
+outid = fopen(strcat(BPdata_directory,NameOfFile,'_by_sample_ID.csv'), 'w+');
 fprintf(outid, '%s', headers_BP_results_by_sample_ID);
 fclose(outid);
-dlmwrite (strcat(BP_directory,NameOfFile,'_by_sample_ID.csv'),BP_results_by_sample_ID,'roffset',1,'-append','precision',export_precision);
+dlmwrite (strcat(BPdata_directory,NameOfFile,'_by_sample_ID.csv'),BP_results_by_sample_ID,'roffset',1,'-append','precision',export_precision);
 
 headers_Station_data_by_station_no = ['Cruise_ID,CTD_station_no,Experiment_no,Experiment_time_point,Incu_start_time,Incu_end_time,Incu_duration,CTD_sample_incutemp,Experimental_sample_incutemp,Experimental_temp_treatment_incu_temp,CTD_station_time,CTD_station_lat,CTD_station_long'];
-outid = fopen(strcat(BP_directory,NameOfFile,'_by_station_no.csv'), 'w+');
+outid = fopen(strcat(BPdata_directory,NameOfFile,'_by_station_no.csv'), 'w+');
 fprintf(outid, '%s', headers_Station_data_by_station_no);
 fclose(outid);
-dlmwrite (strcat(BP_directory,NameOfFile,'_by_station_no.csv'),Station_data_by_station_no,'roffset',1,'-append','precision',export_precision);
+dlmwrite (strcat(BPdata_directory,NameOfFile,'_by_station_no.csv'),Station_data_by_station_no,'roffset',1,'-append','precision',export_precision);
 
 headers_BP_results_replicate_averaged_by_CTD = ['Cruise_ID,CTD_station_no,Depth,Mean_DPM_live_samples,Standard_dev_live_samples,DPM_of_killed_control,Incu_duration,Mean_trit_leu_uptake_live_samples_dpm_L_hr,Std_dev_trit_leu_uptake_live_samples_dpm_l_hr,Trit_leu_uptake_killed_control_dpm_L_hr,Trit_leu_uptake_dpm_L_hr,Std_dev_trit_leu_uptake_dpm_l_hr,Mean_trit_leu_uptake_live_samples_pmol_L_hr,Std_dev_trit_leu_uptake_live_samples_pmol_L_hr,Trit_leu_uptake_killed_control_pmol_L_hr,Trit_leu_uptake_pmol_L_hr,Std_dev_trit_leu_uptake_pmol_L_hr,Signal_to_noise_ratio,CTD_sample_incutemp,CTD_station_time,CTD_station_lat,CTD_station_long'];
-outid = fopen(strcat(BP_directory,NameOfFile,'_replicate_averaged_by_CTD.csv'), 'w+');
+outid = fopen(strcat(BPdata_directory,NameOfFile,'_replicate_averaged_by_CTD.csv'), 'w+');
 fprintf(outid, '%s', headers_BP_results_replicate_averaged_by_CTD);
 fclose(outid);
-dlmwrite (strcat(BP_directory,NameOfFile,'_replicate_averaged_by_CTD.csv'),BP_results_replicate_averaged_by_CTD,'roffset',1,'-append','precision',export_precision);
+dlmwrite (strcat(BPdata_directory,NameOfFile,'_replicate_averaged_by_CTD.csv'),BP_results_replicate_averaged_by_CTD,'roffset',1,'-append','precision',export_precision);
 
 headers_BP_results_replicate_averaged_by_experiment = ['Cruise_ID,Experiment_no,Experiment_time_point,Exper_treatment_no,Mean_DPM_live_samples,Standard_dev_live_samples,Mean_DPM_killed_controls,Standard_dev_killed_controls,Incu_duration,Mean_trit_leu_uptake_live_samples_dpm_L_hr,Std_dev_trit_leu_uptake_live_samples_dpm_l_hr,Mean_trit_leu_uptake_killed_controls_dpm_L_hr,Std_dev_trit_leu_uptake_killed_controls_dpm_L_hr,Trit_leu_uptake_dpm_L_hr,Std_dev_trit_leu_uptake_dpm_l_hr,Mean_trit_leu_uptake_live_samples_pmol_L_hr,Std_dev_trit_leu_uptake_live_samples_pmol_L_hr,Mean_trit_leu_uptake_killed_controls_pmol_L_hr,Std_dev_trit_leu_uptake_killed_controls_pmol_L_hr,Trit_leu_uptake_pmol_L_hr,Std_dev_trit_leu_uptake_pmol_L_hr,Signal_to_noise_ratio,Experimental_sample_incutemp,Experimental_temp_treatment_incu_temp'];
-outid = fopen(strcat(BP_directory,NameOfFile,'_replicate_averaged_by_experiment.csv'), 'w+');
+outid = fopen(strcat(BPdata_directory,NameOfFile,'_replicate_averaged_by_experiment.csv'), 'w+');
 fprintf(outid, '%s', headers_BP_results_replicate_averaged_by_experiment);
 fclose(outid);
-dlmwrite (strcat(BP_directory,NameOfFile,'_replicate_averaged_by_experiment.csv'),BP_results_replicate_averaged_by_experiment,'roffset',1,'-append','precision',export_precision);
+dlmwrite (strcat(BPdata_directory,NameOfFile,'_replicate_averaged_by_experiment.csv'),BP_results_replicate_averaged_by_experiment,'roffset',1,'-append','precision',export_precision);
 
 disp([char(10) 'The following files have been generated:' char(10)]);
 disp(strcat(NameOfFile,'_by_sample_ID.csv'));
@@ -787,7 +801,7 @@ disp(strcat(NameOfFile,'_replicate_averaged_by_CTD.csv'));
 disp(strcat(NameOfFile,'_replicate_averaged_by_experiment.csv'));
 disp(strcat(NameOfFile,'.mat'));
 disp([char(10) 'These files can be found in:']);
-disp(BP_directory);
+disp(BPdata_directory);
 
 % clean up some more stuff
 
