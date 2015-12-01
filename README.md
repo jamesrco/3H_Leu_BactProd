@@ -3,7 +3,7 @@ Suite of scripts for evaluating, calculating, and plotting rates of marine bacte
 
 Collins, J. R., B. R. Edwards, K. Thamatrakoln, J. E. Ossolinski, G. R. DiTullio, K. D. Bidle, S. C. Doney, and B. A. S. Van Mooy. 2015. [The multiple fates of sinking particles in the North Atlantic Ocean](http://dx.doi.org/10.1002/2014GB005037). Global Biogeochem. Cycles 29: 1471-1494, doi:10.1002/2014GB005037
 
-The final, processed BP data generated using these scripts and the methods described in the 2015 paper are archived to: http://www.bco-dmo.org/deployment/58787 (KN207-1 data) and http://www.bco-dmo.org/project/2136 (KN207-3 data)
+Details of specific incubation methods are provided in the paper. The final, processed BP data generated using these scripts are archived to: http://www.bco-dmo.org/deployment/58787 (KN207-1 data) and http://www.bco-dmo.org/project/2136 (KN207-3 data)
 
 3H_Leu_BactProd includes:
 
