@@ -23,10 +23,10 @@ Details of specific incubation methods are provided in the paper. The final, pro
    * The three statistical summary plots require the function errorbar_tick (by Arnaud Laurent) for fine-tuning the widths of error bars. The function is contained in the m-file [errorbar_tick.m](https://github.com/jamesrco/3H_Leu_BactProd/blob/master/errorbar_tick.m), which I've re-posted under the BSD License. The original can be downloaded from the MATLAB file exchange at http://www.mathworks.com/matlabcentral/fileexchange/22826-adjust-error-bar-width/content/errorbar_tick.m
 
 Examples of the plots that can be generated with this script (from Collins et al. 2015):
-<img src="img/Collins_et_al_2015_Fig_S1.png" alt="Visualization of statistics" width="800">
+<img src="img/Collins_et_al_2015_Fig_S1.png" alt="Visualization of statistics" width="700">
 Some statistics.
 
-<img src="img/Collins_et_al_2015_Fig_S2.png" alt="Depth vs. latitude contour plots" width="800">
+<img src="img/Collins_et_al_2015_Fig_S2.png" alt="Depth vs. latitude contour plots" width="700">
 Depth versus latitude contour plots. Uses scatteredInterpolant(), meshgrid(), and contourf() as an easy alternative to Ocean Data View.
 
 For details on the 3H-leucine microcentrifige method, see:
