@@ -44,7 +44,7 @@
 %
 %  2. Liquid scintillation counter data for your samples. Example LSC data
 %  from Collins et al. 2015 are provided in the file
-%  "Van Mooy BP sample master log - KN207-1 and KN207-3.xls" in the sub-
+%  "LSC_BP_data_KN207-1,KN207-3.xls" in the sub-
 %  repository sample_data_metadata.
 %  The "Sample ID" field in this file should contain sample numbers that
 %  correspond to the field of the same name in the sample metadata file
@@ -55,14 +55,14 @@
 %  treatments/timepoints, if appropriate) in which the samples were analyzed,
 %  including the incubation duration and temperature. Metadata that accompany
 %  the Collins et al. 2015 LSC data are provided in the file
-%  "Sample inventory for BP workups - KN207-1,KN207-3.xlsx"
+%  "BP_metadata_KN207-1,KN207-3.xlsx"
 %  The first tab of this Excel file ("Sample ID inventory") contains
 %  metadata of the first type, while the second tab ("Incu durations,
 %  temps, notes") contains metadata of the second type
 %
 %  4. For "full" processing of BP data from CTD casts, also required are 
-%  two files (KN207-1_shipcasts.xlsx and KN207-3_shipcasts.xlsx) containing
-%  CTD cast metadata
+%  two files (Shipcast_metadata_KN207-1.xlsx and
+%  Shipcast_metadata_KN207-3.xlsx) containing CTD cast metadata
 
 % Caveats:
 %
@@ -85,10 +85,10 @@ close all
 BPdata_directory = 'sample_data_metadata/';
 
 % specify name of file containing LSC sample data
-LSCdatafile = 'Van Mooy BP sample master log - KN207-1 and KN207-3.xls';
+LSCdatafile = 'LSC_BP_data_KN207-1,KN207-3.xls';
 
 % specify name of file containing metadata
-BPmetdatfile = 'Sample inventory for BP workups - KN207-1,KN207-3.xlsx';
+BPmetdatfile = 'BP_metadata_KN207-1,KN207-3.xlsx';
 
 % specify base name of file that will serve as a sink for .mat and .csv data output
 NameOfFile = '3H_Leu_BactProd_calcs';
@@ -290,8 +290,8 @@ stainv.Exper_no(ind_exp7_stainv) = 7;
 
 % read in CTD station metadata
 
-[num_KN2071data txt_KN2071data  raw_KN2071data ] = xlsread(strcat(BPdata_directory,'KN207-1_shipcasts.xlsx'));
-[num_KN2073data txt_KN2073data  raw_KN2073data ] = xlsread(strcat(BPdata_directory,'KN207-3_shipcasts.xlsx'));
+[num_KN2071data txt_KN2071data  raw_KN2071data ] = xlsread(strcat(BPdata_directory,'Shipcast_metadata_KN207-1.xlsx'));
+[num_KN2073data txt_KN2073data  raw_KN2073data ] = xlsread(strcat(BPdata_directory,'Shipcast_metadata_KN207-3.xlsx'));
 
 Ship_data_2071=cell2mat(raw_KN2071data(9:end,[1 5 6 7]));
 Ship_data_2073=cell2mat(raw_KN2073data(11:end,[1 5 6 7]));
