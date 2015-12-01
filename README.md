@@ -24,9 +24,11 @@ Details of specific incubation methods are provided in the paper. The final, pro
 
 Examples of the plots that can be generated with this script (from Collins et al. 2015):
 <img src="img/Collins_et_al_2015_Fig_S1.png" alt="Visualization of statistics" width="700">
+
 Some statistics.
 
 <img src="img/Collins_et_al_2015_Fig_S2.png" alt="Depth vs. latitude contour plots" width="700">
+
 Depth versus latitude contour plots. Uses scatteredInterpolant(), meshgrid(), and contourf() as an easy alternative to Ocean Data View.
 
 For details on the 3H-leucine microcentrifige method, see:
